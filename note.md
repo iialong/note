@@ -30,3 +30,35 @@
 指令执行过程中，指令和数据被从存储器取到CPU，存放在CPU内的寄存器中，指令在IR中，数据在GPR中。
 
 # RC
+
+## WEB
+
+
+
+## 算号器
+
+npm run dev
+
+npm run build
+
+## gitbook
+
+环境安装
+
+cnpm install -g gitbook-cli
+
+生成文档
+
+gitbook init
+
+gitbook serve
+
+## 插件
+
+### IF5
+
+#### IF5上线失败
+
+错误代码查看：authn_constant.h
+
+errorcode 101，202：需要保证SN和一机一密录入正确

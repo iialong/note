@@ -165,6 +165,14 @@ ISA是一种规约（Specification），它规定了**如何使用硬件**
 
 ![image-20220904231918995](https://raw.githubusercontent.com/iialong/note/main/images/202209042319070.png)
 
+# 工具
+
+## 网站
+
+linux工具快速教程：
+
+https://linuxtools-rst.readthedocs.io/zh_CN/latest/index.html
+
 # RC
 
 ## WEB

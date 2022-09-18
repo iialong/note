@@ -77,15 +77,14 @@
 
 经典hello.c源程序
 
-`#include <stdio.h>`
+```c
+#include <stdio.h>
 
-`int main()`
-
-`{`
-
-`printf("hello, world\n");`
-
-`}`
+int main()
+{
+	printf("hello, world\n");
+}
+```
 
 ![image-20220904110954966](https://raw.githubusercontent.com/iialong/note/main/images/202209041109091.png)
 
@@ -170,6 +169,213 @@ ISA是一种规约（Specification），它规定了**如何使用硬件**
 ![image-20220904231918995](https://raw.githubusercontent.com/iialong/note/main/images/202209042319070.png)
 
 ### 2.3--C语言中的整数
+
+# C
+
+### kill函数
+
+函数原型如下:
+
+`int kill(pid_t pid, int sig);`
+
+pid > 0 向pid指定的进程发送sig指定的信号.
+
+pid = 0 向调用kill函数所在进程组中的所有进程发送sig指定的信号.
+
+pid = -1 向调用kill函数所在进程拥有权限的所有进程发送sig信号,除了进程1(init).
+
+pid < -1 向进程组id 为-pid 内的所有进程发送sig 信号.
+
+返回值:成功返回0; 错误返回-1,并且errno会被设置相应的值.
+
+**如果sig = 0, 没有信号发送,但是错误检查还是会执行。sig = 0，可以被用于检查pid指定的进程或进程组是否存在。**
+
+如下:
+
+```c
+#include <errno.h>
+if(kill(mClientPid, 0) == -1 && errno == ESRCH){
+
+	printf("client process is dead!\n");
+
+}
+```
+
+<errno.h>头文件
+
+errno.h 提供了一个整数全局变量errno，代码是一个int型的值，extern int errno来声明定义该错误值，errno 记录系统的最后一次错误代码。
+
+### errno
+
+Linux中系统调用的错误都存储于 `errno`中，`errno`由操作系统维护，存储就近发生的错误，即下一次的错误码会覆盖掉上一次的错误。
+
+只有当系统调用或者调用lib函数时出错，才会置位`errno`！
+
+```c
+/* Function: obtain the errno string
+*   char *strerror(int errno)
+*/
+ 
+#include <stdio.h>
+#include <string.h>     //for strerror()
+int main()
+{
+    int tmp = 0;
+    for(tmp = 0; tmp <=256; tmp++)
+    {
+        printf("errno: %2d\t%s\n",tmp,strerror(tmp));
+    }
+    return 0;
+}
+```
+
+Linux中，在头文件 `/usr/include/asm-generic/errno-base.h` 对基础常用errno进行了宏定义，在 `/usr/include/asm-asm-generic/errno.h` 中，对剩余的errno做了宏定义
+
+https://www.cnblogs.com/Jimmy1988/p/7485133.html
+
+### fork函数
+
+在Linux下有两个基本的系统调用可以用于创建子进程：fork()和vfork()，当一个进程正在运行的时候，使用了fork()函数之后就会创建另一个进程。与一般函数不同的是，fork()函数会有两次返回值，一次返回给父进程（该返回值是子进程的PID（Process ID）），第二次返回是给子进程，其返回值为0。所以在调用该函数以后，我们需要通过返回值来判断当前的代码时父进程还是子进程在运行：
+
+返回值大于0 -> 父进程在运行
+返回值等于0 -> 子进程在运行
+返回值小于0 -> 函数系统调用出错
+
+通常系统调用出错的原因有两个：①已存在的系统进程已经太多；②该实际用户ID的进程总数已经超过了限制。
+
+当fork()系统调用时，创建了一个新的子进程，这个子进程时父进程的一个副本，系统在创建了这个新的子进程了之后，会将父进程的文本段、数据段、堆栈都复制一份给子进程，子进程拥有自己独立的空间，对自己内存的修改并不会影响父进程相应的内存空间。
+
+https://blog.csdn.net/geiii9/article/details/123814112
+
+示例代码：先执行子进程，再执行父进程：
+
+```c
+#include <stdio.h>
+
+int pid = fork();
+
+if(pid < 0)
+{
+    //faile
+    return;
+}
+else if(pid = 0)
+{
+    //子进程
+    exit(0);
+}
+else
+{
+    while(1)
+    {
+        sleep(1);
+        if(kill(pid, 0) < 0)
+        {
+            //父进程
+        }
+    }
+}
+```
+
+### sigsetjmp函数
+
+相关函数：longjmp, siglongjmp, setjmp 
+表头文件：#include <setjmp.h> 
+函数定义：int sigsetjmp(sigjmp_buf env, int savesigs) 
+
+函数说明：
+
+sigsetjmp()会保存目前堆栈环境，然后将目前的地址作一个记号，而在程序其他地方调用siglongjmp()时便会直接跳到这个记号位置，然后还原堆栈，继续程序的执行。 
+
+参数env为用来保存目前堆栈环境，一般声明为全局变量 ；
+参数savesigs若为非0则代表搁置的信号集合也会一块保存 。
+
+返回：若直接调用则为0，若从siglongjmp调用返回则为非0。
+
+https://blog.csdn.net/tujiaw/article/details/7230990
+
+示例：
+
+```c
+#include <string.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <setjmp.h>
+#include <unistd.h>
+#include <stdio.h>
+
+sigjmp_buf jmp_env;
+
+static void connect_alarm()
+{
+    siglongjmp(jmp_env, 1);
+}
+
+int main()
+{
+    int sec_timeout = 3;//超时时间
+    int run_time = 2;
+
+    signal(SIGALRM, connect_alarm);
+    if (sigsetjmp(jmp_env, 1))
+    {
+        //超时
+        alarm(0);
+        return 0;
+    }
+
+    alarm(sec_timeout);
+    printf("set timeout\n");
+    //to do something
+    sleep(run_time);
+    printf("running...\n");
+	signal(SIGALRM, SIG_IGN);
+
+    return 0;
+}
+```
+
+
+
+# 前端
+
+### 在Vue中修改element UI组件的样式（deep 深度选择器）
+
+直接使用\<style\>标签，没有scopd属性，会在全局生效，可能会造成其他组件样式的错乱，所以该方式不推荐。
+
+```css
+<style>
+
+</style>
+```
+
+当 \<style\> 标签中有 scoped 属性时，它的 CSS 只作用于当前组件中的元素，父组件中如果有跟子组件相同的class名称或者使用选择器的时候，不会影响其子组件。也就是实现了组件的私有化，不对全局造成样式污染。
+
+当想在父组件修改子组件的样式，就需要使用/deep/深度选择器。
+
+修改el-input的后缀元素背景颜色：
+
+```html
+<el-input v-model.number="form.limit_down" class="input-with-select">
+    <el-select v-model="unit_down" slot="append" style="width: 80px;">
+        <el-option
+            v-for="item in unitOption"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+        >
+        </el-option>
+    </el-select>
+</el-input>
+```
+
+```css
+<style scoped>
+  .input-with-select /deep/ .el-input-group__append {
+    background-color: #ffffff;
+  }
+</style>
+```
 
 
 

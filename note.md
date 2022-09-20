@@ -335,6 +335,69 @@ int main()
 }
 ```
 
+### 一个传指针并修改的错误
+
+要在函数内修改指针的值，参数需要传指针的地址
+
+错误代码：
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct a{
+    int i;
+}A;
+
+void init(A *p);
+
+int main(void)
+{
+    A *ptr = NULL;
+
+    init(ptr);
+	//这里ptr认为NULL，并未修改
+    printf("ptr[1] = %d\n", ptr[1].i);
+
+    return 0;
+}
+
+void init(A *p)
+{
+    p = malloc(4 * sizeof(A));
+    p[1].i = 555;
+}
+```
+
+正确代码：
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct a{
+	int i;
+}A;
+
+void init(A **p);
+
+int main(void)
+{
+        A *ptr = NULL;
+
+        init(&ptr);//要修改ptr，需传ptr的地址
+        printf("ptr[1] = %d\n", ptr[1].i);
+
+        return 0;
+}
+
+void init(A **p)
+{
+        *p = malloc(4 * sizeof(A));
+        (*p)[1].i = 555;
+}
+```
+
 
 
 # 前端
@@ -377,7 +440,52 @@ int main()
 </style>
 ```
 
+### vue中的computed、watch(immediate、deep)区别
 
+computed是vue实例中的计算属性，存在缓存机制，只有它所依赖的属性值发生变化才会重新计算，否则默认走缓存。
+
+当一个属性依赖多个属性时一般可以采用computed方式，当该属性依赖的其他属性发生变化时，会立即调用该属性的get方法重新计算当前的属性值并重新渲染页面。
+
+watch只能监听**data中现有的属性**，只要监听的属性发生变化就会触发监听函数执行。
+
+computed和watch的区别：
+
+- 1、computed默认走缓存，减少性能消耗；watch不走缓存
+- 2、computed不支持异步；watch支持异步
+- 3、当一个属性依赖多个属性时使用computed（多对一）；当一个属性变化会引起多个操作时使用watch（一对多）
+
+watch监听函数在第一次绑定时不执行，只有在监听到的属性值发生变化才会执行对应的监听函数，利用watch中的immediate属性让watch中监听函数在第一次绑定时就执行。
+
+可以通过设置watch中的deep属性值为true，实现通过设置一个对象的监听函数，就可以监听到该对象中的属性值发生的变化。
+
+# linux
+
+### iptables参数
+
+iptables -t nat -L
+
+- -t table表名（指定要操作的表，默认filter）
+
+- -L（列出链所有的规则）
+
+iptables -t nat -F DMZ_nas0_0
+
+- -F chain链名（清除该链下所有操作）
+
+iptables -t nat -I DMZ_nas0_0 -p all -i nas0_0 -j DNAT --to 192.168.2.2
+
+- -I chain链名 [rulenum第几条规则]（插入规则到该链第rulenum条规则之前，rulenum默认为1）
+- -p protocol协议（指定协议，tcp udp all）
+- -i interface接口名（指定输入的网络接口）
+- -j target跳转目标（指定下一个处理规则，如ACCEPT,REJECT,DROP,DNAT,SNAT等）
+- --to ip（DNAT目的地址）
+
+iptables -t nat -A DMZ_nas0_0 -p tcp --dport 80 -i nas0_0 -j DNAT --to 192.168.2.159:8000
+
+- -A chain链名（追加规则到该链最后）
+- --dport port（指定tcp或udp后指定要匹配的目的端口号）
+
+https://blog.csdn.net/wzj_110/article/details/108890766
 
 # 工具
 

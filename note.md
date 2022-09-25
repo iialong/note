@@ -398,7 +398,75 @@ void init(A **p)
 }
 ```
 
+### readlink与/proc/self/exe
 
+头文件`#include <unistd.h>`
+
+定义函数：`ssize_t readlink(const char *path, char *buf, size_t bufsiz);`
+
+函数说明：readlink()会将参数path的 符号链接内容存储到参数buf所指的内存空间，返回的内容不是以\000作字符串结尾，但会将字符串的字符数返回，这使得添加\000变得简单。若参数bufsiz小于符号连接的内容长度，过长的内容会被截断，如果 readlink 第一个参数指向一个文件而不是 符号链接时，readlink 设 置errno 为 EINVAL 并返回 -1。 readlink()函数组合了open()、read()和close()的所有操作。
+
+返回值 ：执行成功则返回字符串的字符数，失败返回-1， 错误代码存于errno
+
+执行成功则返回ssize_t
+
+
+
+linux系统中有个符号链接：/proc/self/exe 它代表当前程序，所以可以用readlink读取它的源路径就可以获取当前程序的绝对路径，如下：
+
+```c
+#include <unistd.h>
+#include <stdio.h>
+ 
+int main(int argc , char* argv[])
+{
+    char buf[1024] = { 0 };
+    int n;
+ 
+    n = readlink("/proc/self/exe" , buf , sizeof(buf));
+    if( n > 0 && n < sizeof(buf))
+    {
+        printf("%s\n" , buf);
+    }
+}
+```
+
+https://blog.csdn.net/wteruiycbqqvwt/article/details/112664432
+
+
+
+# linux
+
+### iptables参数
+
+iptables -t nat -L
+
+- -t table表名（指定要操作的表，默认filter）
+
+- -L（列出链所有的规则）
+
+iptables -t nat -F DMZ_nas0_0
+
+- -F chain链名（清除该链下所有操作）
+
+iptables -t nat -I DMZ_nas0_0 -p all -i nas0_0 -j DNAT --to 192.168.2.2
+
+- -I chain链名 [rulenum第几条规则]（插入规则到该链第rulenum条规则之前，rulenum默认为1）
+- -p protocol协议（指定协议，tcp udp all）
+- -i interface接口名（指定输入的网络接口）
+- -j target跳转目标（指定下一个处理规则，如ACCEPT,REJECT,DROP,DNAT,SNAT等）
+- --to ip（DNAT目的地址）
+
+iptables -t nat -A DMZ_nas0_0 -p tcp --dport 80 -i nas0_0 -j DNAT --to 192.168.2.159:8000
+
+- -A chain链名（追加规则到该链最后）
+- --dport port（指定tcp或udp后指定要匹配的目的端口号）
+
+https://blog.csdn.net/wzj_110/article/details/108890766
+
+### grep搜索跳过某个目录
+
+grep -nr --exclude-dir="skipDir" sreachContent
 
 # 前端
 
@@ -458,34 +526,17 @@ watch监听函数在第一次绑定时不执行，只有在监听到的属性值
 
 可以通过设置watch中的deep属性值为true，实现通过设置一个对象的监听函数，就可以监听到该对象中的属性值发生的变化。
 
-# linux
+### setTimeout
 
-### iptables参数
+运行机制：
 
-iptables -t nat -L
+setTimeout和setInterval的运行机制是，将指定的代码移出本次执行，等到下一轮Event Loop时，再检查是否到了指定时间。如果到了，就执行对应的代码；如果不到，就等到再下一轮Event Loop时重新判断。这意味着，setTimeout指定的代码，必须等到本次执行的所有代码都执行完，才会执行。
 
-- -t table表名（指定要操作的表，默认filter）
+每一轮Event Loop时，都会将“任务队列”中需要执行的任务，一次执行完。setTimeout和setInterval都是把任务添加到“任务队列”的尾部。因此，它们实际上要等到当前脚本的所有同步任务执行完，然后再等到本次Event Loop的“任务队列”的所有任务执行完，才会开始执行。由于前面的任务到底需要多少时间执行完，是不确定的，所以没有办法保证，setTimeout和setInterval指定的任务，一定会按照预定时间执行。
 
-- -L（列出链所有的规则）
+`setTimeout(f,0)`将第二个参数设为0，作用是让f在现有的任务（脚本的同步任务和“任务队列”中已有的事件）一结束就立刻执行。也就是说，`setTimeout(f,0)`的作用是，尽可能早地执行指定的任务。
 
-iptables -t nat -F DMZ_nas0_0
-
-- -F chain链名（清除该链下所有操作）
-
-iptables -t nat -I DMZ_nas0_0 -p all -i nas0_0 -j DNAT --to 192.168.2.2
-
-- -I chain链名 [rulenum第几条规则]（插入规则到该链第rulenum条规则之前，rulenum默认为1）
-- -p protocol协议（指定协议，tcp udp all）
-- -i interface接口名（指定输入的网络接口）
-- -j target跳转目标（指定下一个处理规则，如ACCEPT,REJECT,DROP,DNAT,SNAT等）
-- --to ip（DNAT目的地址）
-
-iptables -t nat -A DMZ_nas0_0 -p tcp --dport 80 -i nas0_0 -j DNAT --to 192.168.2.159:8000
-
-- -A chain链名（追加规则到该链最后）
-- --dport port（指定tcp或udp后指定要匹配的目的端口号）
-
-https://blog.csdn.net/wzj_110/article/details/108890766
+https://blog.csdn.net/lihchweb/article/details/94635720
 
 # 工具
 

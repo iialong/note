@@ -148,27 +148,101 @@ ISA是一种规约（Specification），它规定了**如何使用硬件**
 
 ### 2.2--定点数的编码表示
 
-**原码**
+- **原码**
 
-![image-20220904231548380](https://raw.githubusercontent.com/iialong/note/main/images/202209042315443.png)
+![image-20220904231548380](https://raw.githubusercontent.com/iialong/note/main/images/202209042315443.png)   
 
 原码容易理解，但是不容易使用
 
 从 50年代开始，**整数都采用补码来表示，但浮点数的尾数用原码定点小数表示**
 
-**补码**
+- **补码**
 
-正数的补码为本身
+  正数的补码为本身
 
-负数的补码等于将对应正数补码**各位取反、末位加一**
+  负数的补码等于将对应正数补码**各位取反、末位加一**
 
-​		简便方法：从右向左遇到第一个1的前面各位取反
+  简便方法：从右向左遇到第一个1的前面各位取反
 
-**移码**
+- **移码**
 
 ![image-20220904231918995](https://raw.githubusercontent.com/iialong/note/main/images/202209042319070.png)
 
 ### 2.3--C语言中的整数
+
+- **无符号整数(Unsigned integer)**
+
+  一般在全部是正数运算且不出现负值结果的场合下，可使用无符号整数数表示；
+
+  无符号整数的编码中**没有符号位**。
+
+- **带符号整数(Signed integer)**
+
+  带符号整数用**补码**表示，补码运算系统是模运算系统，加、减运算统一。
+
+- **编译器处理常量时默认的类型**
+
+C99标准下：
+
+![image-20220925162749964](https://raw.githubusercontent.com/iialong/note/main/images/202209251627080.png)
+
+### 2.4--浮点数的编码表示
+
+
+
+### 2.5--非数值数据的编码表示
+
+- 西文字符
+
+  ASCII码
+
+- 汉字及国际字符
+
+  **GB2312-80字符集**
+
+  - 汉字的区位码
+
+    码表由94行、94列组成，行号为区号，列号为位号，各占7位，指出汉字在码表中的位置，共14位，区号在左、位号在右
+
+  - 汉字的国标码
+
+    每个汉字的区号和位号各自加上32（20H），得到其国标码
+
+    国标码中区号和位号各占7位。在计算机内部，为方便处理与存储，前面添一个0，构成一个字节
+
+  - 汉字内码
+
+    可在GB2312国标码的基础上产生汉字内码
+
+    为与ASCII码区别，将国标码的两个字节的第一位置“1”后得到一种汉字内码（可以有不同的编码方案）
+
+### 2.6--数据宽度和存储容量的单位
+
+数据的基本宽度
+
+- 比特（bit，位）是计算机中处理、存储、传输信息的最小单位
+- 二进制信息最基本的计量单位是“字节”(Byte) 
+  - 现代计算机中，存储器按字节编址
+  - 字节是最小可寻址单位 (addressable unit) 
+  - 如果以字节为一个排列单位，则LSB表示最低有效字节，MSB表示最高有效字节
+
+C语言中数据类型的宽度 (单位：字节)
+
+| C声明  | 32位机器 | 64位机器 |
+| :----: | :------: | :------: |
+|  char  |    1     |    1     |
+| short  |    2     |    2     |
+|  int   |    4     |    4     |
+|  long  |    4     |    8     |
+| float  |    4     |    4     |
+| double |    8     |    8     |
+|  指针  |    4     |    8     |
+
+### 2.7--数据存储时的字节排列
+
+80年代开始，几乎所有通用计算机都采用**字节编址**
+
+![image-20220925173117670](https://raw.githubusercontent.com/iialong/note/main/images/202209251731757.png)
 
 # C
 
@@ -433,6 +507,84 @@ int main(int argc , char* argv[])
 
 https://blog.csdn.net/wteruiycbqqvwt/article/details/112664432
 
+### getopt函数 -- 解析命令的可选项
+
+【说明】
+
+getopt只是一个简单的解析命令可选项的函数，只能进行简单的格式命令解析，格式如下：
+
+1、形如：cmd [-a]\[-b\] //对短选项的解析；
+
+2、形如：cmd [-a a_argument]\[-b b_argument\] //对短选项及短选项的参数解析；
+
+3、形如：cmd [-a\[a_argument\]] //选项a的参数也是可选的情况解析。
+
+【原型】
+
+```c
+#include <unistd.h>
+ 
+extern char *optarg;
+extern int optind, opterr, optopt;
+int getopt(int argc, char * const argv[], const char *optstring);
+```
+
+关于optstring的格式规范简单总结如下：
+
+(1) 单个字符，表示该选项Option不需要参数。
+
+(2) 单个字符后接一个冒号":"，表示该选项Option需要一个选项参数Option argument。选项参数Option argument可以紧跟在选项Option之后，或者以空格隔开。选项参数Option argument的首地址赋给optarg。
+
+(3) 单个字符后接两个冒号"::"，表示该选项Option的选项参数Option argument是可选的。当提供了Option argument时，必须紧跟Option之后，不能以空格隔开，否则getopt()会认为该选项Option没有选项参数Option argument，optarg赋值为NULL。相反，提供了选项参数Option argument，则optarg指向Option argument。
+
+为了使用getopt()，我们需要在while循环中不断地调用直到其返回-1为止。每一次调用，当getopt()找到一个有效的Option的时候就会返回这个Option字符，并设置几个全局变量。
+
+全局变量
+
+char *optarg -- 当匹配一个选项后，如果该选项带选项参数，则optarg指向选项参数字符串；若该选项不带选项参数，则optarg为NULL；若该选项的选项参数为可选时，optarg为NULL表明无选项参数，optarg不为NULL时则指向选项参数字符串。
+
+https://blog.csdn.net/c1523456/article/details/79173776
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/types.h>
+
+extern char *optarg;
+extern int optind, opterr, optopt;
+
+int main(int argc, char *argv[])
+{
+        int i;
+        int opt;
+
+        while ((opt = getopt(argc, argv, "a:b::c")) != -1)
+        {
+            switch (opt) {
+                case 'a':
+                    printf ("option: %c argv: %s\n", opt, optarg);
+                    break;
+                case 'b':
+                    if (optarg)
+                        printf ("option: %c argv: %s\n", opt, optarg);
+                    else
+                        printf ("option: %c no argument\n", opt);
+                    break;
+                case 'c':
+                    printf ("option: %c\n", opt);
+                    break;
+                default:
+                    printf ("unknow option: %c\n", opt);
+                    break;
+            }
+        }
+
+        return 0;
+}
+```
+
 
 
 # linux
@@ -467,6 +619,14 @@ https://blog.csdn.net/wzj_110/article/details/108890766
 ### grep搜索跳过某个目录
 
 grep -nr --exclude-dir="skipDir" sreachContent
+
+### /dev/null
+
+/dev/null在Linux中其实是一个空设备文件，它对于写入的东西通通扔掉。
+
+由于它没有执行权限，不是一个可执行文件，所以不能使用管道符 **|** 来接 /dev/null ，只能使用文件重定向（**>**, **>>** 或 **<**, **<<**）。
+
+https://baijiahao.baidu.com/s?id=1712518976709206113
 
 # 前端
 

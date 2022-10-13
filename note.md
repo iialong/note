@@ -727,6 +727,18 @@ grep -nr --exclude-dir="skipDir" sreachContent
 
 https://baijiahao.baidu.com/s?id=1712518976709206113
 
+# 网络
+
+### MAC地址分类
+
+一个制造商在生产制造网卡之前，必须先向 IEEE 注册，以获取到一个长度为 24bit 的厂商代码，也称为 OUI（Organizationally-Unique Identifier）。制造商在生产制造网卡的过程中，会往每一块网卡的 ROM 中烧入一个 48bit 的 BIA（Burned-In Address，固化地址）地址，BIA 地址的前 3 个字节就是该制造商的 OUI，后 3 个字节由该制造商自己确定，但不同的网卡，其 BIA 地址的后 3 个字节不相同。烧入进网卡的 BIA 地址是不能被更改的，只能被读取出来使用。
+
+注意，BIA 地址只是 MAC 地址的一种，更准确的说，BIA 地址是一种单播 MAC 地址。MAC 地址共分为 3 种，分别为单播 MAC 地址、组播 MAC 地址、广播 MAC 地址。这 3 种 MAC 地址的定义分别如下：
+
+1）单播 MAC 地址是指第一个字节的最低位是 0 的 MAC 地址。
+2）组播 MAC 地址是指第一个字节的最低位是 1 的 MAC 地址。
+3）广播 MAC 地址是指每个比特都是 1 的 MAC 地址。广播 MAC 地址是组播 MAC 地址的一个特例。
+
 # 前端
 
 ### 在Vue中修改element UI组件的样式（deep 深度选择器）

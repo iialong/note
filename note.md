@@ -684,6 +684,136 @@ int main(int argc, char *argv[])
 }
 ```
 
+### 共享内存与二维数组
+
+库函数说明
+
+```c
+#include <sys/shm.h>
+
+int shmget(key_t key, size_t size, int shmflg);
+void *shmat(int shmid, const void *shmaddr, int shmflg);
+int shmdt(const void *shmaddr);
+int shmctl(int shmid, int cmd, struct shmid_ds *buf);
+
+#include <sys/ipc.h>
+key_t ftok(const char *pathname, int proj_id);
+```
+
+shmget()：创建共享内存区
+
+- key参数的产生
+
+  方式一：通过传进一个pathname和project_id，使用ftok调用产生的。这种方式适用于同个项目中相互通信场景，不过需要提前约定好文件路径、名称以及项目id。
+
+  方式二：自定义方式key，key_t 其实是一个int类型的重新声明，直接传自定义的key给shmget也是可以的。
+
+- size指定需要创建的共享内存段的大小，读取时可以设为0。
+
+- shmflag
+
+  支持： IPC_CREAT、IPC_EXCL、SHM_HUGETLB、SHM_NORESERVE，及共享内存的权限。
+
+  如果同时指定IPC_CREAT、IPC_EXCL，且指定key已存在，则报错。
+
+  访问一个已经存在的共享内存，此时可以将shmflg置为0，不加任何标识打开。
+
+- 返回值
+
+  成功返回一个非负整数，即共享内存的标识符；失败返回-1
+
+shmat()：把这块共享内存区挂接映射到两个进程的地址空间上。
+
+shmdt()：撤销内存映射关系
+
+https://www.jianshu.com/p/701a73809887
+
+https://blog.csdn.net/m0_53311279/article/details/125160583
+
+写共享内存
+
+```c
+#include <sys/shm.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#deinfe ROW 64
+#deinfe LENGTH 32
+
+static char (*list)[LENGTH];
+static const long key_id 0x42424141;//AABB
+static int shm_id = -1;
+static int shm_size = ROW*LENGTH;
+
+int main()
+{
+    int i;
+    shm_id = shmget(key_id, shm_size, IPC_CREAT | IPC_EXCL | 0666);
+    if(shm_id == -1)
+    {
+        return 0;
+	}
+    
+    list = (char (*)[LENGTH])shmat(shm_id, NULL, 0);
+    if((void *)list == (void *)-1)
+    {
+        return 0;
+    }
+    
+    for(i = 0; i < ROW; i++)
+    {
+        memcpy(list[i], "string", 7);
+    }
+    
+    if(shm_id != -1)
+    {
+        shmdt(shm_id);
+    }
+}
+```
+
+读共享内存
+
+```c
+#include <sys/shm.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#deinfe ROW 64
+#deinfe LENGTH 32
+
+static char (*list)[LENGTH];
+static const long key_id 0x42424141;//AABB
+static int shm_id = -1;
+static int shm_size = ROW*LENGTH;
+
+int main()
+{
+    int i;
+    shm_id = shmget(key_id, 0, 0);
+    if(shm_id == -1)
+    {
+        return 0;
+	}
+    
+    list = (char (*)[LENGTH])shmat(shm_id, NULL, 0);
+    if((void *)list == (void *)-1)
+    {
+        return 0;
+    }
+    
+    for(i = 0; i < ROW; i++)
+    {
+        printf("%s\n", list[i]);
+    }
+    
+    if(shm_id != -1)
+    {
+        shmdt(shm_id);
+    }
+}
+```
+
 
 
 # linux

@@ -939,6 +939,54 @@ setTimeout和setInterval的运行机制是，将指定的代码移出本次执�
 
 https://blog.csdn.net/lihchweb/article/details/94635720
 
+### VUE $router.push()使用query传参的坑
+
+$router.push()使用query传Boolean类型的数据，但是页面跳转后接收的值变成了字符串类型。
+
+传数据：
+
+```javascript
+this.$router.push({
+    path: "settingDone",
+    query: { merge: this.form.merge }
+});
+```
+
+取数据：
+
+```javascript
+created() {
+    this.merge = this.$route.query.merge;
+}
+```
+
+原因是query的值是直接从页面URL中取的，而在页面URL上的参数的类型只能是字符串类型。
+
+解决方法：
+
+把要传的参数放在一个对象里，再进行JSON.stringify()处理，再放到query里面。到了目标页面后再进行JSON.parse()处理，还原对象。
+
+传数据：
+
+```javascript
+let queryData = JSON.stringify(this.form);
+this.$router.push({
+    path: "settingDone",
+    query: { data: queryData }
+});
+```
+
+取数据：
+
+```javascript
+created() {
+    let queryData = JSON.parse(this.$route.query.data);
+    this.merge = queryData.merge;
+}
+```
+
+https://blog.csdn.net/drunk2/article/details/124088377
+
 # 工具
 
 ## 网站

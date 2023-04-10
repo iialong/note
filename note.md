@@ -857,6 +857,30 @@ grep -nr --exclude-dir="skipDir" sreachContent
 
 https://baijiahao.baidu.com/s?id=1712518976709206113
 
+### openssl生成RAS密钥对
+
+- 生成私钥：
+
+  openssl genrsa -out rsa_private_key.pem 2048
+
+- 生成公钥：
+
+  openssl rsa -in rsa_private_key.pem -pubout -out rsa_public_key.pem
+
+- 查看私钥内容（n,e,b）：
+
+  openssl asn1parse -i -in rsa_private_key.pem
+
+  ![image-20230410211859834](https://raw.githubusercontent.com/iialong/note/main/images/image-20230410211859834.png)
+
+- 查看公钥内容（n,e）：
+
+  openssl asn1parse -i -in rsa_private_key.pem
+
+  ![image-20230410212103739](https://raw.githubusercontent.com/iialong/note/main/images/image-20230410212103739.png)
+
+https://blog.csdn.net/fengbingchun/article/details/106546012/
+
 # 网络
 
 ### MAC地址分类

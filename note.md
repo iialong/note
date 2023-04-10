@@ -869,6 +869,24 @@ https://baijiahao.baidu.com/s?id=1712518976709206113
 2）组播 MAC 地址是指第一个字节的最低位是 1 的 MAC 地址。
 3）广播 MAC 地址是指每个比特都是 1 的 MAC 地址。广播 MAC 地址是组播 MAC 地址的一个特例。
 
+### ARP特殊报文
+
+- ARP Announcement
+
+一种特殊的 ARP 请求广播，主要用于在子网中通告本机 MAC 地址和 IP 地址。
+
+![image-20230410210437282](https://raw.githubusercontent.com/iialong/note/main/images/image-20230410210437282.png)
+
+- ARP Probe
+
+用于检查子网内是否存在 IP 冲突，通常如果应答包中包含多个不同的 MAC 地址，那么表示存在 IP 冲突。
+
+![image-20230410210410575](https://raw.githubusercontent.com/iialong/note/main/images/image-20230410210410575.png)
+
+https://lqingcloud.cn/post/network-02/
+
+https://www.practicalnetworking.net/series/arp/arp-probe-arp-announcement/
+
 # 前端
 
 ### 在Vue中修改element UI组件的样式（deep 深度选择器）
